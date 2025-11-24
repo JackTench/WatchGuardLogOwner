@@ -1,9 +1,20 @@
+import os
+import json
 import pandas as pd
 from ipwhois import IPWhois
 
 def main():
     df = pd.read_csv('input.csv')
-    ip_cache = {}
+    ip_cache_file = "cache.json"
+
+    # Load cache from disk.
+    # Allows cache to persist between runs.
+    if os.path.exists(ip_cache_file):
+        with open(ip_cache_file, 'r') as f:
+            ip_cache = json.load(f)
+        print(f"Loaded {len(ip_cache)} cached IP entries.")
+    else:
+        ip_cache = {}
 
     print("Starting log search and IP lookup...")
 
@@ -36,6 +47,11 @@ def main():
     df['dst_ip_owner'] = df['dst_ip'].apply(lambda ip: get_ip_owner(ip) if ip else "Invalid IP")
     df.to_csv('output_with_owners.csv', index=False)
     print("IP ownership lookup completed. Results saved in output_with_owners.csv")
+
+    # Write cache to disk.
+    with open(ip_cache_file , 'w') as f:
+        json.dump(ip_cache, f, indent=2)
+    print(f"IP cache saved to {ip_cache_file}")
 
 if __name__ == "__main__":
     main()
